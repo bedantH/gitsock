@@ -1,9 +1,11 @@
 use std::env;
 use tokio::time::sleep;
 use std::time::Duration;
+use aes_gcm::aead::consts::True;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::Deserialize;
+use serde_json::json;
 use crate::crypto::encrypt;
 
 const GITHUB_AUTH_BASE_URL: &'static str = "https://github.com";
@@ -16,7 +18,7 @@ static GITHUB_CLIENT_ID: Lazy<String> = Lazy::new(|| {
     env::var("GITHUB_OAUTH_CLIENT_ID").expect("GITHUB_CLIENT_ID")
 });
 
-static client: Lazy<Client> = Lazy::new(|| {
+static CLIENT: Lazy<Client> = Lazy::new(|| {
     reqwest::Client::new()
 });
 
@@ -25,7 +27,6 @@ pub(crate) struct DeviceCodeResponse {
     pub(crate) device_code: String,
     pub(crate) user_code: String,
     pub(crate) verification_uri: String,
-    pub(crate) expires_in: u64,
     pub(crate) interval: u64,
 }
 
@@ -39,10 +40,10 @@ struct AccessTokenResponse {
 pub async fn start_device_login_flow() -> Result<DeviceCodeResponse, Box<dyn std::error::Error>> {
     let params = [
         ("client_id", GITHUB_CLIENT_ID.clone()),
-        ("scope", String::from("user, read:public_key")),
+        ("scope", String::from("user, admin:public_key")),
     ];
 
-    let res = client.post(format!("{}/login/device/code", GITHUB_AUTH_BASE_URL))
+    let res = CLIENT.post(format!("{}/login/device/code", GITHUB_AUTH_BASE_URL))
         .header("Accept", "application/vnd.github.v3+json")
         .form(&params)
         .send()
@@ -72,7 +73,7 @@ pub async fn poll_for_token(device_code: String, interval: u64) -> Result<Option
     loop {
         sleep(Duration::from_secs(interval)).await;
 
-        let res = client.post(format!("{}/login/oauth/access_token", GITHUB_AUTH_BASE_URL))
+        let res = CLIENT.post(format!("{}/login/oauth/access_token", GITHUB_AUTH_BASE_URL))
             .header("Accept", "application/vnd.github.v3+json")
             .form(&params)
             .send()
@@ -108,7 +109,7 @@ pub(crate) struct UserInfoResponse {
 }
 
 pub async fn get_user_info(token: String) -> Result<UserInfoResponse, Box<dyn std::error::Error>> {
-    let res = client.get(format!("{}/user", GITHUB_API_BASE_URL))
+    let res = CLIENT.get(format!("{}/user", GITHUB_API_BASE_URL))
         .header("Accept", "application/vnd.github.v3+json")
         .header("Authorization", format!("Bearer {}", token))
         .header("X-GitHub-Api-Version", "2022-11-28")
@@ -127,4 +128,37 @@ pub async fn get_user_info(token: String) -> Result<UserInfoResponse, Box<dyn st
         .map_err(|e| format!("Failed to parse user info: {}. Body: {}", e, text))?;
 
     Ok(user_info)
+}
+
+pub async fn remove_account_github(token: String) -> Result<bool, Box<dyn std::error::Error>> {
+    let url = format!(
+        "{}/applications/{}/token",
+        GITHUB_API_BASE_URL,
+        GITHUB_CLIENT_ID.clone()
+    );
+
+    let body = json!({
+        "access_token": token,
+    });
+
+    let res = CLIENT
+        .delete(&url)
+        .header("Accept", "application/vnd.github.v3+json")
+        .header("X-GitHub-Api-Version", "2022-11-28")
+        .header("User-Agent", "GitSock")
+        .basic_auth(&*GITHUB_CLIENT_ID, Some(&*GITHUB_CLIENT_SECRET))
+        .json(&body)
+        .send()
+        .await?;
+
+    if res.status().is_success() {
+        println!("✅ Account permissions revoked successfully.");
+        Ok(true)
+    } else {
+        let status = res.status();
+        let text = res.text().await?;
+        eprintln!("❌ Failed to revoke token: {status} - {text}");
+
+        Ok(false)
+    }
 }

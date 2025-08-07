@@ -7,6 +7,7 @@ mod initializer;
 mod services;
 mod commands;
 mod types;
+mod local_commands;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>  {
