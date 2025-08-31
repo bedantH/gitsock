@@ -3,7 +3,6 @@ use oauth2::url::quirks::username;
 use crate::commands::root::switch;
 
 pub mod account;
-pub mod hooks;
 pub mod repo;
 pub mod ssh;
 pub mod root;
@@ -33,6 +32,18 @@ pub enum Commands {
         )]
         username: String,
     },
+    #[command(subcommand)]
+    SSH(ssh::SSHSetupCommands),
+    #[clap(name = "commit")]
+    Commit {
+        #[arg(
+           help = "Intelligent Commit using GitSock",
+           long = "message",
+           short = 'm',
+           value_name = "MESSAGE"
+        )]
+        message: Option<String>,
+    }
 }
 
 impl GitSockCli {
@@ -41,7 +52,9 @@ impl GitSockCli {
             Commands::Account(account) => account.run().await,
             Commands::Me => root::me::run().await,
             Commands::List => root::list::run().await,
-            Commands::Use { username } => root::switch::run(username.clone()).await
+            Commands::Use { username } => switch::run(username.clone()).await,
+            Commands::SSH(ssh) => ssh.run().await,
+            Commands::Commit { message } => root::commit::run(message.clone()).await
         }
     }
 }

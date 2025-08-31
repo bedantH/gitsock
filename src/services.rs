@@ -152,13 +152,40 @@ pub async fn remove_account_github(token: String) -> Result<bool, Box<dyn std::e
         .await?;
 
     if res.status().is_success() {
-        println!("✅ Account permissions revoked successfully.");
+        println!("Account permissions revoked successfully.");
         Ok(true)
     } else {
         let status = res.status();
         let text = res.text().await?;
-        eprintln!("❌ Failed to revoke token: {status} - {text}");
+        eprintln!("Failed to revoke token: {status} - {text}");
 
+        Ok(false)
+    }
+}
+
+pub async fn create_ssh_public_key(title: &str, token: String, key: &str) -> Result<bool, Box<dyn std::error::Error>> {
+    let body = json!({
+        "title": title,
+        "key": key
+    });
+
+    let res = CLIENT
+        .post(format!("{}/user/keys", GITHUB_API_BASE_URL))
+        .header("Accept", "application/vnd.github.v3+json")
+        .header("X-GitHub-Api-Version", "2022-11-28")
+        .header("Authorization", format!("Bearer {}", token))
+        .header("User-Agent", "GitSock")
+        .json(&body)
+        .send()
+        .await?;
+
+    if res.status().is_success() {
+        println!("SSH public key created successfully.");
+        Ok(true)
+    } else {
+        let status = res.status();
+        let text = res.text().await?;
+        eprintln!("Failed to create public key: {status} - {text}");
         Ok(false)
     }
 }

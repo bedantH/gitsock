@@ -3,5 +3,6 @@
     "active_account": ".config/active.json",
     "hooks": ".hooks",
     "token": ".secret/token.bin",
-    "secret": ".secret/secret.bin"
+    "secret": ".secret/secret.bin",
+    "ssh_path": "~/.ssh"
 }

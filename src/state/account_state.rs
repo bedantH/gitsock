@@ -67,6 +67,16 @@ fn load_or_generate_active_account_file() -> Option<ActiveAccount> {
     }
 }
 
+pub fn get_accounts() -> Vec<Account> {
+    let state = ACCOUNT_STATE.lock().unwrap();
+    state.accounts.clone()
+}
+
+pub fn get_active_account() -> ActiveAccount {
+    let state = ACCOUNT_STATE.lock().unwrap();
+    state.active_account.clone().unwrap()
+}
+
 pub fn update_accounts<F>(f: F) -> Vec<Account>
 where F: FnOnce(&mut Vec<Account>),
 {
@@ -90,8 +100,8 @@ where
     if let Some(active_account) = state.active_account.as_mut() {
         f(active_account);
         
-        set_email(active_account.clone().email);
-        set_username(active_account.clone().username);
+        set_email(&*active_account.clone().email, true).expect("Setting email globally failed");
+        set_username(&*active_account.clone().username, true).expect("Setting username failed");
         
         let active_account_path = get_key_as_file("active_account");
         let json = serde_json::to_string_pretty(&active_account).unwrap();
