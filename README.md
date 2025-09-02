@@ -11,8 +11,8 @@ Gitsock is a command-line tool designed to simplify your daily git operations. W
 1. Go to the [Releases](https://github.com/your-repo/gitsock/releases) page.
 2. Download the binary for your OS:
 
-   * **Linux** → `gitsock-linux-x86_64`
-   * **macOS** → `gitsock-macos-[x86_64|arm64]`
+   * **Linux** → `gitsock-linux-x86_64` (Upcoming)
+   * **macOS** → `gitsock-macos`
    * **Windows** → `gitsock-windows-x86_64.exe`
 3. Move the binary to a directory in your **PATH**.
 
