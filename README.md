@@ -1,27 +1,53 @@
 # Gitsock: Your Personalized Git Management Assistant
 
-Gitsock is a command-line tool designed to simplify your daily git operations. With its intuitive interface and extensive command set, you can manage your git accounts, SSH keys, and more with ease.
+Gitsock is a lightweight command-line tool that makes managing multiple Git accounts effortless.
+
+Whether you’re switching between personal projects, client work, or company repos, Gitsock handles the context for you so Git always behaves as expected — no manual tweaks, no mistakes, just smooth workflows.
 
 ---
 
-## 🔧 Installation
+## Features
+
+- **Multi-Account Management** – Add, remove, list, and switch between accounts in seconds.  
+- **SSH Key Orchestration** – Manage multiple SSH identities and set defaults effortlessly.  
+- **Seamless Repo Operations** – Clone, commit, and push with the correct account every time.  
+- **Profile Switching** – Jump between accounts with a single command.  
+- **Intelligent Commit** – Automatically validates commit authorship and prevents mistakes.  
+
+---
+
+## Intelligent Commit
+
+One of Gitsock’s standout features is Intelligent Commit.  
+
+When you commit changes, Gitsock:  
+- Detects your active profile before committing.  
+- Validates that the commit author and email match the current account.  
+- Warns or auto-corrects if you’re about to commit under the wrong identity.  
+
+This ensures you never accidentally push company code from your personal account, or vice versa. It saves time, prevents errors, and removes the need for fixing history later with `git rebase`.  
+
+---
+
+## Installation
 
 ### Option 1: Download Prebuilt Binary (Recommended)
 
-1. Go to the [Releases](https://github.com/your-repo/gitsock/releases) page.
+1. Go to the [Releases](https://github.com/bedantH/gitsock/releases) page.  
 2. Download the binary for your OS:
 
-   * **Linux** → `gitsock-linux-x86_64` (Upcoming)
-   * **macOS** → `gitsock-macos`
-   * **Windows** → `gitsock-windows-x86_64.exe`
-3. Move the binary to a directory in your **PATH**.
+   * **Linux** → `gitsock-linux-x86_64`  
+   * **macOS** → `gitsock-macos`  
+   * **Windows** → `gitsock-windows-x86_64.exe`  
 
-Example (Linux/macOS):
+3. Move the binary to a directory in your **PATH**.  
+
+Example (Linux/macOS):  
 
 ```sh
 chmod +x gitsock-linux-x86_64
 sudo mv gitsock-linux-x86_64 /usr/local/bin/gitsock
-```
+````
 
 Example (Windows PowerShell):
 
@@ -57,7 +83,7 @@ sudo mv target/release/gitsock /usr/local/bin/
 
 ---
 
-## ⚡ Commands
+## Commands
 
 ### Account Management
 
@@ -133,7 +159,7 @@ Options:
 
 ---
 
-## 📌 Usage Examples
+## Usage Examples
 
 * **Add a New Account**
 
@@ -167,14 +193,14 @@ gitsock use myuser
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions from the community!
 Open issues and pull requests on the [GitHub repository](https://github.com/your-repo/gitsock).
 
 ---
 
-## 📄 License
+## License
 
 Gitsock is released under the MIT license.
 See the [LICENSE](LICENSE) file for details.
