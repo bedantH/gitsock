@@ -5,7 +5,7 @@ async fn switch_account(username_or_alias: &str) -> Result<(), Box<dyn std::erro
 
     let currently_active = state.active_account.as_ref().cloned().unwrap();
 
-    if currently_active.username == username_or_alias || currently_active.alias == Option::from(username_or_alias.to_string()) {
+    if currently_active.username == username_or_alias || currently_active.alias.as_deref() == Some(&username_or_alias) {
         println!("Account is already active.");
         return Ok(());
     }
@@ -14,7 +14,7 @@ async fn switch_account(username_or_alias: &str) -> Result<(), Box<dyn std::erro
 
     drop(state);
 
-    if let Some(account) = all_accounts.iter().find(|&account| account.username == username_or_alias) {
+    if let Some(account) = all_accounts.iter().find(|&account| account.username == username_or_alias || account.alias.as_deref() == Some(&username_or_alias)) {
         update_active_account(|active_account| {
             active_account.username = account.clone().username;
             active_account.token = account.clone().token;

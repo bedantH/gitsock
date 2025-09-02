@@ -10,7 +10,10 @@ pub struct Account {
     pub(crate) ssh_path: Option<String>,
     #[serde(default)]
     pub(crate) alias: Option<String>,
-    pub(crate) token: Option<Vec<u8>>
+    pub(crate) token: Option<Vec<u8>>,
+    
+    #[serde(default)]
+    pub(crate) default: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

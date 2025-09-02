@@ -1,15 +1,12 @@
 use clap::{Parser, Subcommand};
-use oauth2::url::quirks::username;
 use crate::commands::root::switch;
 
 pub mod account;
-pub mod repo;
 pub mod ssh;
 pub mod root;
-mod git;
 
 #[derive(Parser)]
-#[command(name="gitsock", version,  author, about = "Tool to manage multiple github accounts locally.")]
+#[command(name="gitsock", version="v1.0.0", author="bedantH", about = "Tool to manage multiple github accounts locally.")]
 pub struct GitSockCli {
     #[command(subcommand)]
     pub command: Commands,
@@ -18,11 +15,15 @@ pub struct GitSockCli {
 #[derive(Subcommand)]
 pub enum Commands {
     #[command(subcommand)]
+    /// Add or manipulate GitHub accounts
     Account(account::AccountCommands),
+    /// Display details of the currently active account
     Me,
     #[clap(name = "ls")]
+    /// Display all configured GitHub accounts
     List,
     #[clap(name = "use")]
+    /// Switch between configured GitHub accounts
     Use {
         #[arg(
             help = "Change your active Git account",
@@ -33,8 +34,10 @@ pub enum Commands {
         username: String,
     },
     #[command(subcommand)]
+    /// Manage SSH connections for your GitHub accounts
     SSH(ssh::SSHSetupCommands),
     #[clap(name = "commit")]
+    /// Make intelligent git commits using GitSock
     Commit {
         #[arg(
            help = "Intelligent Commit using GitSock",
@@ -43,6 +46,21 @@ pub enum Commands {
            value_name = "MESSAGE"
         )]
         message: Option<String>,
+    },
+    /// Clone a repository using a specific GitHub account
+    #[command(name = "clone")]
+    Clone {
+        #[arg(
+            help = "SSH URL of the repository to clone.",
+            value_name = "URL"
+        )]
+        url: String,
+
+        #[arg(
+            help = "Username or Alias of the account to use for cloning.",
+            value_name = "USERNAME or ALIAS"
+        )]
+        username_or_alias: Option<String>,
     }
 }
 
@@ -54,7 +72,8 @@ impl GitSockCli {
             Commands::List => root::list::run().await,
             Commands::Use { username } => switch::run(username.clone()).await,
             Commands::SSH(ssh) => ssh.run().await,
-            Commands::Commit { message } => root::commit::run(message.clone()).await
+            Commands::Commit { message } => root::commit::run(message.clone()).await,
+            Commands::Clone { username_or_alias, url} => root::clone::run(username_or_alias.clone(), url.clone()).await,
         }
     }
 }

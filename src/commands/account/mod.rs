@@ -4,7 +4,9 @@ pub mod remove;
 
 #[derive(Subcommand)]
 pub(crate) enum AccountCommands {
+    /// Creating a new GitHub account
     Add,
+    /// Remove an integrated GitHub account
     Remove {
         #[arg(
             help = "Username of the account to remove",

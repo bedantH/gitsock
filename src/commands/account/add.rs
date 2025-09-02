@@ -42,6 +42,7 @@ async fn add_new_account() -> Result<(), Box<dyn std::error::Error>> {
                         token: Some(encrypted_token.clone()),
                         ssh_path: None,
                         alias,
+                        default: false,
                     };
 
                     let mut is_new_account = false;

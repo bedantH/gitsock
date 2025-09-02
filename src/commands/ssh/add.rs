@@ -36,7 +36,7 @@ pub fn ssh_config_path() -> PathBuf {
 pub async fn add_ssh_for_account(username_or_alias: &str, default: bool) -> Result<(), Box<dyn std::error::Error>> {
     let accounts = get_accounts();
     let account_data = accounts.iter().find(|&account| {
-        account.username == username_or_alias || account.alias.as_deref() == Some(username_or_alias)
+        account.username == username_or_alias || account.alias.as_deref() == Some(&username_or_alias)
     });
 
     if let Some(account) = account_data.cloned() {
@@ -129,6 +129,7 @@ pub async fn add_ssh_for_account(username_or_alias: &str, default: bool) -> Resu
         update_accounts(|accounts| {
             if let Some(acc) = accounts.iter_mut().find(|acc| acc.username == account.username) {
                 acc.ssh_path = Some(private_key_path.to_string_lossy().to_string());
+                acc.default = default;
             }
         });
 
