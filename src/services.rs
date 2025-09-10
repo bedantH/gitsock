@@ -1,21 +1,23 @@
 use std::env;
 use tokio::time::sleep;
 use std::time::Duration;
-use aes_gcm::aead::consts::True;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::json;
-use crate::crypto::encrypt;
+use dotenvy::dotenv;
 
 const GITHUB_AUTH_BASE_URL: &'static str = "https://github.com";
 const GITHUB_API_BASE_URL: &'static str = "https://api.github.com";
 
 static GITHUB_CLIENT_SECRET: Lazy<String> = Lazy::new(|| {
-    env::var("GITHUB_OAUTH_CLIENT_SECRET").expect("GITHUB_CLIENT_SECRET")
+    dotenv().ok();
+    env::var("GITHUB_OAUTH_CLIENT_SECRET").expect("Missing GITHUB_OAUTH_CLIENT_SECRET")
 });
+
 static GITHUB_CLIENT_ID: Lazy<String> = Lazy::new(|| {
-    env::var("GITHUB_OAUTH_CLIENT_ID").expect("GITHUB_CLIENT_ID")
+    dotenv().ok();
+    env::var("GITHUB_OAUTH_CLIENT_ID").expect("Missing GITHUB_OAUTH_CLIENT_ID")
 });
 
 static CLIENT: Lazy<Client> = Lazy::new(|| {
