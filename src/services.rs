@@ -4,16 +4,10 @@ use std::time::Duration;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::Deserialize;
-use serde_json::json;
 use dotenvy::dotenv;
 
 const GITHUB_AUTH_BASE_URL: &'static str = "https://github.com";
 const GITHUB_API_BASE_URL: &'static str = "https://api.github.com";
-
-static GITHUB_CLIENT_SECRET: Lazy<String> = Lazy::new(|| {
-    dotenv().ok();
-    env::var("GITHUB_OAUTH_CLIENT_SECRET").expect("Missing GITHUB_OAUTH_CLIENT_SECRET")
-});
 
 static GITHUB_CLIENT_ID: Lazy<String> = Lazy::new(|| {
     dotenv().ok();
@@ -21,7 +15,7 @@ static GITHUB_CLIENT_ID: Lazy<String> = Lazy::new(|| {
 });
 
 static CLIENT: Lazy<Client> = Lazy::new(|| {
-    reqwest::Client::new()
+    Client::new()
 });
 
 #[derive(Deserialize, Debug)]
@@ -50,7 +44,7 @@ pub async fn start_device_login_flow() -> Result<DeviceCodeResponse, Box<dyn std
         .form(&params)
         .send()
         .await.unwrap();
-    
+
     let status = res.status();
 
     if !res.status().is_success() {
@@ -66,7 +60,6 @@ pub async fn start_device_login_flow() -> Result<DeviceCodeResponse, Box<dyn std
 pub async fn poll_for_token(device_code: String, interval: u64) -> Result<Option<String>, Box<dyn std::error::Error>> {
     let params = [
         ("client_id", GITHUB_CLIENT_ID.clone()),
-        ("client_secret", GITHUB_CLIENT_SECRET.clone()),
         ("device_code", device_code),
         ("grant_type", "urn:ietf:params:oauth:grant-type:device_code".parse().unwrap()),
     ];
@@ -130,64 +123,4 @@ pub async fn get_user_info(token: String) -> Result<UserInfoResponse, Box<dyn st
         .map_err(|e| format!("Failed to parse user info: {}. Body: {}", e, text))?;
 
     Ok(user_info)
-}
-
-pub async fn remove_account_github(token: String) -> Result<bool, Box<dyn std::error::Error>> {
-    let url = format!(
-        "{}/applications/{}/token",
-        GITHUB_API_BASE_URL,
-        GITHUB_CLIENT_ID.clone()
-    );
-
-    let body = json!({
-        "access_token": token,
-    });
-
-    let res = CLIENT
-        .delete(&url)
-        .header("Accept", "application/vnd.github.v3+json")
-        .header("X-GitHub-Api-Version", "2022-11-28")
-        .header("User-Agent", "GitSock")
-        .basic_auth(&*GITHUB_CLIENT_ID, Some(&*GITHUB_CLIENT_SECRET))
-        .json(&body)
-        .send()
-        .await?;
-
-    if res.status().is_success() {
-        println!("Account permissions revoked successfully.");
-        Ok(true)
-    } else {
-        let status = res.status();
-        let text = res.text().await?;
-        eprintln!("Failed to revoke token: {status} - {text}");
-
-        Ok(false)
-    }
-}
-
-pub async fn create_ssh_public_key(title: &str, token: String, key: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    let body = json!({
-        "title": title,
-        "key": key
-    });
-
-    let res = CLIENT
-        .post(format!("{}/user/keys", GITHUB_API_BASE_URL))
-        .header("Accept", "application/vnd.github.v3+json")
-        .header("X-GitHub-Api-Version", "2022-11-28")
-        .header("Authorization", format!("Bearer {}", token))
-        .header("User-Agent", "GitSock")
-        .json(&body)
-        .send()
-        .await?;
-
-    if res.status().is_success() {
-        println!("SSH public key created successfully.");
-        Ok(true)
-    } else {
-        let status = res.status();
-        let text = res.text().await?;
-        eprintln!("Failed to create public key: {status} - {text}");
-        Ok(false)
-    }
 }

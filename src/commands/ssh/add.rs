@@ -4,7 +4,7 @@ use std::fs::OpenOptions;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
-use crate::state::{get_accounts, update_accounts};
+use crate::state::{get_accounts, update_account, update_accounts};
 use crate::utils::{generate_rsa_key_pair, save_key};
 
 pub fn ssh_key_path(alias: &str) -> PathBuf {
@@ -55,7 +55,6 @@ pub async fn add_ssh_for_account(username_or_alias: &str, default: bool) -> Resu
                     save_key(private_key_path.to_str().unwrap(), &private_key);
                     save_key(public_key_path.to_str().unwrap(), &public_key);
 
-                    // --- 🔑 Step 1: Write SSH config entry BEFORE testing ---
                     let config_path = ssh_config_path();
                     let host = if default { "github.com" } else { alias.as_str() };
                     let config_entry = format!(
@@ -80,7 +79,6 @@ pub async fn add_ssh_for_account(username_or_alias: &str, default: bool) -> Resu
                         println!("SSH config entry for alias '{}' already exists", alias);
                     }
 
-                    // --- 🔑 Step 2: Show public key & manual GitHub steps ---
                     println!("\n==== Public Key (copy this to GitHub SSH Keys) ====\n");
                     println!("{}", public_key);
                     println!("=================================================\n");
@@ -96,7 +94,7 @@ pub async fn add_ssh_for_account(username_or_alias: &str, default: bool) -> Resu
                         println!("Testing SSH connection for alias '{}'", alias);
                         let output = Command::new("ssh")
                             .arg("-T")
-                            .arg(alias.as_str())
+                            .arg(if default { "github.com" } else {alias.as_str()})
                             .output()?;
 
                         let stdout = String::from_utf8_lossy(&output.stdout);
@@ -126,11 +124,9 @@ pub async fn add_ssh_for_account(username_or_alias: &str, default: bool) -> Resu
             return Ok(());
         }
 
-        update_accounts(|accounts| {
-            if let Some(acc) = accounts.iter_mut().find(|acc| acc.username == account.username) {
-                acc.ssh_path = Some(private_key_path.to_string_lossy().to_string());
-                acc.default = default;
-            }
+        update_account(&account.username, |acc| {
+            acc.ssh_path = Some(private_key_path.to_string_lossy().to_string());
+            acc.default = default;
         });
 
         Ok(())

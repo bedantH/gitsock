@@ -77,7 +77,31 @@ pub fn get_active_account() -> ActiveAccount {
     state.active_account.clone().unwrap()
 }
 
-pub fn update_accounts<F>(f: F) -> Vec<Account>
+pub fn update_account(
+    username: &str,
+    updater: impl FnOnce(&mut Account),
+) -> Option<Account> {
+    let mut state = ACCOUNT_STATE.lock().unwrap();
+    let updated: Option<Account>;
+
+    {
+        if let Some(existing) = state.accounts.iter_mut().find(|a| a.username == username) {
+            updater(existing);
+            updated = Some(existing.clone());
+        } else {
+            return None;
+        }
+    } // <- mutable borrow of state.accounts ends here
+
+    // now safe to serialize/write
+    let accounts_path = get_key_as_file("accounts");
+    let json = serde_json::to_string_pretty(&state.accounts).unwrap();
+    fs::write(accounts_path, json).expect("Error writing to accounts file");
+
+    updated
+}
+
+pub fn update_accounts<F>(f: F)
 where F: FnOnce(&mut Vec<Account>),
 {
     let mut state = ACCOUNT_STATE.lock().unwrap();
@@ -87,8 +111,6 @@ where F: FnOnce(&mut Vec<Account>),
     let json = serde_json::to_string_pretty(&state.accounts).unwrap();
 
     fs::write(&accounts_path, &json).expect("Error writing to accounts file");
-
-    state.accounts.clone()
 }
 
 pub fn update_active_account<F>(f: F) -> Option<ActiveAccount>
