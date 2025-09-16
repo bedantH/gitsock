@@ -6,7 +6,7 @@ async fn list_all_accounts() -> Result<(), Box<dyn std::error::Error>> {
 
     if state.accounts.iter().count() == 0 {
         println!("Oops!, You don't have any GitHub accounts logged in.");
-        println!("Run `git log --help` for more information.");
+        println!("Run `gitsock account add` to add new account.");
 
         return Ok(());
     }

@@ -61,7 +61,10 @@ pub enum Commands {
             value_name = "USERNAME or ALIAS"
         )]
         username_or_alias: Option<String>,
-    }
+    },
+    /// Setup GitSock in PATH variable
+    #[command(name = "setup")]
+    Setup,
 }
 
 impl GitSockCli {
@@ -74,6 +77,7 @@ impl GitSockCli {
             Commands::SSH(ssh) => ssh.run().await,
             Commands::Commit { message } => root::commit::run(message.clone()).await,
             Commands::Clone { username_or_alias, url} => root::clone::run(username_or_alias.clone(), url.clone()).await,
+            Commands::Setup => root::setup::run(),
         }
     }
 }

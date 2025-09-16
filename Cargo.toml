@@ -19,6 +19,8 @@ rand = "0.8"
 base64 = "0.21"
 chrono = "0.4.41"
 dotenvy = "0.15"
+dirs-next = "2.0.0"
+dirs = "6.0.0"
 
 [build-dependencies]
 dotenvy = "0.15"
