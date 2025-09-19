@@ -36,28 +36,19 @@ This ensures you never accidentally push company code from your personal account
 1. Go to the [Releases](https://github.com/bedantH/gitsock/releases) page.  
 2. Download the binary for your OS:
 
-   * **Linux** → `gitsock-linux-x86_64`  
-   * **macOS** → `gitsock-macos`  
-   * **Windows** → `gitsock-windows-x86_64.exe`  
+   * **Linux** → `gitsock`  
+   * **macOS** → `gitsock`  
+   * **Windows** → `gitsock.exe`  
 
-3. Move the binary to a directory in your **PATH**.  
+3. Run `gitsock setup` command to add gitsock to you PATH env and start using it right away. 
 
 Example (Linux/macOS):  
 
 ```sh
-chmod +x gitsock-linux-x86_64
-sudo mv gitsock-linux-x86_64 /usr/local/bin/gitsock
+chmod +x gitsock
 ````
-
-Example (Windows PowerShell):
-
-```powershell
-move .\gitsock-windows-x86_64.exe C:\Program Files\Gitsock\gitsock.exe
-```
-
-Then add `C:\Program Files\Gitsock\` to your system **PATH**.
-
 ---
+
 
 ### Option 2: Build from Source
 
@@ -75,11 +66,12 @@ cd gitsock
 cargo build --release
 ```
 
-4. Copy it into your PATH:
+4. Run in-built setup command:
 
 ```sh
-sudo mv target/release/gitsock /usr/local/bin/
+gitsock setup
 ```
+This will setup ENV path variables and create the appropriate folders for you.
 
 ---
 
