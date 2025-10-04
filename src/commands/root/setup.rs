@@ -124,7 +124,9 @@ pub fn setup() -> Result<(), Box<dyn std::error::Error>> {
             .any(|p| p.to_lowercase() == gitsock_str.to_lowercase())
         {
             let new_path = format!("{};{}", gitsock_str, current_path);
-            env::set_var("PATH", &new_path);
+            unsafe {
+                env::set_var("PATH", &new_path);
+            };
             
             let output = std::process::Command::new("setx")
                 .arg("PATH")
@@ -139,16 +141,9 @@ pub fn setup() -> Result<(), Box<dyn std::error::Error>> {
                     );
                 }
                 Ok(_) => {
-                    eprintln!(
-                        "[WARNING] Failed to persist PATH with setx. You may need to add it manually."
-                    );
                     eprintln!("[INFO] Add this to your PATH manually: {}", gitsock_str);
                 }
-                Err(e) => {
-                    eprintln!(
-                        "[WARNING] Could not run setx: {}. You may need to add PATH manually.",
-                        e
-                    );
+                Err(_e) => {
                     eprintln!("[INFO] Add this to your PATH manually: {}", gitsock_str);
                 }
             }
