@@ -5,10 +5,10 @@ use dirs_next as dirs;
 
 lazy_static::lazy_static! {
     pub static ref CONFIG: Value = {
-        #[cfg(debug_assertions)]
-        let path = "config.json";
+        // #[cfg(debug_assertions)]
+        // let path = "config.json";
 
-        #[cfg(not(debug_assertions))]
+        // #[cfg(not(debug_assertions))]
         let path = expand_home("~/gitsock/config.json");
 
         if !std::path::Path::new(&path).exists() {

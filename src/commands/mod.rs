@@ -27,9 +27,7 @@ pub enum Commands {
     Use {
         #[arg(
             help = "Change your active Git account",
-            long = "username",
-            short = 'u',
-            value_name = "USERNAME"
+            index = 1
         )]
         username: String,
     },
@@ -61,6 +59,12 @@ pub enum Commands {
             value_name = "USERNAME or ALIAS"
         )]
         username_or_alias: Option<String>,
+        
+        #[arg(
+            help = "Path where you want to clone the repository into",
+            value_name = "PATH"
+        )]
+        path: Option<String>
     },
     /// Setup GitSock in PATH variable
     #[command(name = "setup")]
@@ -76,7 +80,7 @@ impl GitSockCli {
             Commands::Use { username } => switch::run(username.clone()).await,
             Commands::SSH(ssh) => ssh.run().await,
             Commands::Commit { message } => root::commit::run(message.clone()).await,
-            Commands::Clone { username_or_alias, url} => root::clone::run(username_or_alias.clone(), url.clone()).await,
+            Commands::Clone { username_or_alias, url, path} => root::clone::run(username_or_alias.clone(), url.clone(), path.clone()).await,
             Commands::Setup => root::setup::run(),
         }
     }

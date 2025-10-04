@@ -5,6 +5,4 @@ use crate::state;
 
 pub fn init() {
     Lazy::force(&KEY_STATE);
-    
-    println!("Initializing...");
 }

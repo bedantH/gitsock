@@ -1,11 +1,11 @@
+use crate::state::{get_accounts, update_account};
+use crate::utils::{generate_rsa_key_pair, save_key};
 use std::env::home_dir;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
-use crate::state::{get_accounts, update_account, update_accounts};
-use crate::utils::{generate_rsa_key_pair, save_key};
 
 pub fn ssh_key_path(alias: &str) -> PathBuf {
     let mut path = home_dir().expect("Failed to get home directory");
@@ -33,10 +33,14 @@ pub fn ssh_config_path() -> PathBuf {
     path
 }
 
-pub async fn add_ssh_for_account(username_or_alias: &str, default: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn add_ssh_for_account(
+    username_or_alias: &str,
+    default: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     let accounts = get_accounts();
     let account_data = accounts.iter().find(|&account| {
-        account.username == username_or_alias || account.alias.as_deref() == Some(&username_or_alias)
+        account.username == username_or_alias
+            || account.alias.as_deref() == Some(&username_or_alias)
     });
 
     if let Some(account) = account_data.cloned() {
@@ -56,7 +60,21 @@ pub async fn add_ssh_for_account(username_or_alias: &str, default: bool) -> Resu
                     save_key(public_key_path.to_str().unwrap(), &public_key);
 
                     let config_path = ssh_config_path();
-                    let host = if default { "github.com" } else { alias.as_str() };
+
+                    if default {
+                        let default_already_exists = accounts.iter().find(|a| a.default);
+
+                        if default_already_exists.is_some() {
+                            println!("Default account already exists, Aborting!");
+                            return Err(Box::from("Default SSH entry already exists."));
+                        }
+                    }
+
+                    let host = if default {
+                        "github.com"
+                    } else {
+                        alias.as_str()
+                    };
                     let config_entry = format!(
                         "\n# GitHub account: {} ({})\nHost {}\n    HostName github.com\n    User git\n    IdentityFile ~/.ssh/{}\n    IdentitiesOnly yes\n\n",
                         account.username,
@@ -94,19 +112,30 @@ pub async fn add_ssh_for_account(username_or_alias: &str, default: bool) -> Resu
                         println!("Testing SSH connection for alias '{}'", alias);
                         let output = Command::new("ssh")
                             .arg("-T")
-                            .arg(if default { "github.com" } else {alias.as_str()})
+                            .arg(if default {
+                                "github.com"
+                            } else {
+                                alias.as_str()
+                            })
                             .output()?;
 
                         let stdout = String::from_utf8_lossy(&output.stdout);
                         let stderr = String::from_utf8_lossy(&output.stderr);
 
-                        if stdout.contains("successfully authenticated") || stderr.contains("successfully authenticated") {
-                            println!("✅ Successfully authenticated with GitHub using alias '{}'", alias);
+                        if stdout.contains("successfully authenticated")
+                            || stderr.contains("successfully authenticated")
+                        {
+                            println!(
+                                "✅ Successfully authenticated with GitHub using alias '{}'",
+                                alias
+                            );
                             break;
                         } else {
                             println!("❌ Authentication failed.");
                             println!("ssh output:\n{}\n{}", stdout, stderr);
-                            println!("Please make sure you have added the public key above to GitHub.");
+                            println!(
+                                "Please make sure you have added the public key above to GitHub."
+                            );
                             println!("Once done, press ENTER to retry...");
 
                             let mut input = String::new();
@@ -131,12 +160,17 @@ pub async fn add_ssh_for_account(username_or_alias: &str, default: bool) -> Resu
 
         Ok(())
     } else {
-        eprintln!("Account not found! Please run `gitsock ls` to see a list of integrated accounts");
+        eprintln!(
+            "Account not found! Please run `gitsock ls` to see a list of integrated accounts"
+        );
         Err(Box::from("Account not found"))
     }
 }
 
-pub async fn run(username_or_alias: String, default: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn run(
+    username_or_alias: String,
+    default: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     add_ssh_for_account(username_or_alias.as_str(), default).await?;
     Ok(())
 }

@@ -1,22 +1,20 @@
-use std::env;
-use tokio::time::sleep;
-use std::time::Duration;
+use dotenvy::dotenv;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::Deserialize;
-use dotenvy::dotenv;
+use std::env;
+use std::time::Duration;
+use tokio::time::sleep;
 
 const GITHUB_AUTH_BASE_URL: &'static str = "https://github.com";
 const GITHUB_API_BASE_URL: &'static str = "https://api.github.com";
 
 static GITHUB_CLIENT_ID: Lazy<String> = Lazy::new(|| {
     dotenv().ok();
-    env::var("GITHUB_OAUTH_CLIENT_ID").expect("Missing GITHUB_OAUTH_CLIENT_ID")
+    "Ov23liGAAmFlb0WoAavT".to_string()
 });
 
-static CLIENT: Lazy<Client> = Lazy::new(|| {
-    Client::new()
-});
+static CLIENT: Lazy<Client> = Lazy::new(|| Client::new());
 
 #[derive(Deserialize, Debug)]
 pub(crate) struct DeviceCodeResponse {
@@ -39,11 +37,13 @@ pub async fn start_device_login_flow() -> Result<DeviceCodeResponse, Box<dyn std
         ("scope", String::from("user, admin:public_key")),
     ];
 
-    let res = CLIENT.post(format!("{}/login/device/code", GITHUB_AUTH_BASE_URL))
+    let res = CLIENT
+        .post(format!("{}/login/device/code", GITHUB_AUTH_BASE_URL))
         .header("Accept", "application/vnd.github.v3+json")
         .form(&params)
         .send()
-        .await.unwrap();
+        .await
+        .unwrap();
 
     let status = res.status();
 
@@ -56,19 +56,27 @@ pub async fn start_device_login_flow() -> Result<DeviceCodeResponse, Box<dyn std
     Ok(device_code_response)
 }
 
-
-pub async fn poll_for_token(device_code: String, interval: u64) -> Result<Option<String>, Box<dyn std::error::Error>> {
+pub async fn poll_for_token(
+    device_code: String,
+    interval: u64,
+) -> Result<Option<String>, Box<dyn std::error::Error>> {
     let params = [
         ("client_id", GITHUB_CLIENT_ID.clone()),
         ("device_code", device_code),
-        ("grant_type", "urn:ietf:params:oauth:grant-type:device_code".parse().unwrap()),
+        (
+            "grant_type",
+            "urn:ietf:params:oauth:grant-type:device_code"
+                .parse()
+                .unwrap(),
+        ),
     ];
     let mut auth_token: Option<String> = None;
 
     loop {
         sleep(Duration::from_secs(interval)).await;
 
-        let res = CLIENT.post(format!("{}/login/oauth/access_token", GITHUB_AUTH_BASE_URL))
+        let res = CLIENT
+            .post(format!("{}/login/oauth/access_token", GITHUB_AUTH_BASE_URL))
             .header("Accept", "application/vnd.github.v3+json")
             .form(&params)
             .send()
@@ -104,7 +112,8 @@ pub(crate) struct UserInfoResponse {
 }
 
 pub async fn get_user_info(token: String) -> Result<UserInfoResponse, Box<dyn std::error::Error>> {
-    let res = CLIENT.get(format!("{}/user", GITHUB_API_BASE_URL))
+    let res = CLIENT
+        .get(format!("{}/user", GITHUB_API_BASE_URL))
         .header("Accept", "application/vnd.github.v3+json")
         .header("Authorization", format!("Bearer {}", token))
         .header("X-GitHub-Api-Version", "2022-11-28")

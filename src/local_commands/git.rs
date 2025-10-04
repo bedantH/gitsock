@@ -2,9 +2,9 @@ use std::process::Command;
 
 pub fn set_username(username: &str, global: bool) -> std::io::Result<()> {
     let args = if global {
-        vec!["config", "--global", "user.name", username]
-    } else {
         vec!["config", "user.name", username]
+    } else {
+        vec!["config", "--local", "user.name", username]
     };
 
     let status = Command::new("git").args(&args).status()?;
@@ -16,9 +16,9 @@ pub fn set_username(username: &str, global: bool) -> std::io::Result<()> {
 
 pub fn set_email(email: &str, global: bool) -> std::io::Result<()> {
     let args = if global {
-        vec!["config", "--global", "user.email", email]
-    } else {
         vec!["config", "user.email", email]
+    } else {
+        vec!["config", "--local", "user.email", email]
     };
 
     let status = Command::new("git").args(&args).status()?;

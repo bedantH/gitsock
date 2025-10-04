@@ -10,8 +10,6 @@ pub(crate) enum SSHSetupCommands {
     Add {
         #[arg(
             help = "Username or Alias of the account to add SSH connection to.",
-            long = "acc",
-            short = 'a',
             value_name = "USERNAME or ALIAS"
         )]
         username_or_alias: String,
