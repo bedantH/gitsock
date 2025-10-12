@@ -13,6 +13,13 @@ pub fn setup() -> Result<(), Box<dyn std::error::Error>> {
     let home_dir = dirs::home_dir().ok_or("Could not find home directory")?;
     let gitsock_dir: PathBuf = home_dir.join("gitsock");
 
+    // Marker file to check if setup has already been done
+    let setup_marker = gitsock_dir.join(".gitsock_setup_done");
+    if setup_marker.exists() {
+        // Already set up, silently return
+        return Ok(());
+    }
+
     if !gitsock_dir.exists() {
         fs::create_dir_all(&gitsock_dir)?;
     }
@@ -31,11 +38,6 @@ pub fn setup() -> Result<(), Box<dyn std::error::Error>> {
             perms.set_mode(0o755);
             fs::set_permissions(&exe_dest, perms)?;
         }
-    } else {
-        // eprintln!(
-        //     "[WARNING] Executable {} not found in current directory",
-        //     file_name
-        // );
     }
 
     let gitsock_str = gitsock_dir.to_string_lossy().to_string();
@@ -65,13 +67,7 @@ pub fn setup() -> Result<(), Box<dyn std::error::Error>> {
             let fish_config = fish_config_dir.join("config.fish");
             let fish_export_line = format!(r#"set -gx PATH "{}" $PATH"#, gitsock_str);
 
-            let need_write = if fish_config.exists() {
-                !fs::read_to_string(&fish_config)?.contains(&fish_export_line)
-            } else {
-                true
-            };
-
-            if need_write {
+            if !fish_config.exists() || !fs::read_to_string(&fish_config)?.contains(&fish_export_line) {
                 let mut f = fs::OpenOptions::new()
                     .create(true)
                     .append(true)
@@ -79,6 +75,8 @@ pub fn setup() -> Result<(), Box<dyn std::error::Error>> {
                 writeln!(f, "\n{}", fish_export_line)?;
             }
 
+            // Mark setup done
+            fs::write(&setup_marker, "done")?;
             return Ok(());
         } else {
             vec![
@@ -127,28 +125,20 @@ pub fn setup() -> Result<(), Box<dyn std::error::Error>> {
             unsafe {
                 env::set_var("PATH", &new_path);
             };
-            
+
             let output = std::process::Command::new("setx")
                 .arg("PATH")
                 .arg(format!("{};{}", gitsock_str, current_path))
                 .output();
 
-            match output {
-                Ok(output) if output.status.success() => {
-                    // println!(
-                    //     "[INFO] Successfully added {} to your permanent PATH",
-                    //     gitsock_str
-                    // );
-                }
-                Ok(_) => {
-                    eprintln!("[INFO] Add this to your PATH manually: {}", gitsock_str);
-                }
-                Err(_e) => {
-                    eprintln!("[INFO] Add this to your PATH manually: {}", gitsock_str);
-                }
+            if output.is_err() || !output.as_ref().unwrap().status.success() {
+                eprintln!("[INFO] Add this to your PATH manually: {}", gitsock_str);
             }
         }
     }
+
+    // Create marker file to indicate setup is done
+    fs::write(&setup_marker, "done")?;
 
     Ok(())
 }
