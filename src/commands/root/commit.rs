@@ -64,7 +64,7 @@ fn run_commit(msg: &str) -> io::Result<()> {
     Ok(())
 }
 
-async fn commit(msg: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
+async fn commit(msg: Option<String>, username_or_alias: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
     let accounts = get_accounts();
     let active_account = get_active_account();
 
@@ -73,66 +73,81 @@ async fn commit(msg: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
         return Err(Box::from("Not a git repository!"));
     }
 
-    if let Some((name, email)) = get_local_git_config() {
-        println!("Local config found, using: {} <{}>", name, email);
-        let commit_msg = get_commit_message(msg)?;
-        run_commit(&commit_msg)?;
-        return Ok(());
-    }
+    if let Some(username_or_alias) = username_or_alias {
+        if let Some(account) = accounts.iter().find(|&account| account.username == username_or_alias || account.alias.as_deref() == Some(&username_or_alias)) {
+            set_username(&account.username, false)?;
+            set_email(&account.email, false)?;
 
-    let output = Command::new("git").arg("log").output()?;
-    if !output.status.success() {
-        eprintln!("No commits found, falling back to active account.");
-        set_username(&active_account.username, false)?;
-        set_email(&active_account.email, false)?;
-        let commit_msg = get_commit_message(msg)?;
-        run_commit(&commit_msg)?;
-        return Ok(());
-    }
+            let commit_msg = get_commit_message(msg)?;
+            run_commit(&commit_msg)?;
 
-    let logs = String::from_utf8_lossy(&output.stdout);
-    let list_of_names = accounts.iter().map(|acc| acc.username.as_str()).collect::<Vec<&str>>();
-
-    let match_account = if let Some(matches) = pattern_percentages(&list_of_names, &logs) {
-        if matches.len() == 1 {
-            matches[0].0.clone()
+            return Ok(());
         } else {
-            println!("Multiple accounts matched:");
-            for (i, (name, _)) in matches.iter().enumerate() {
-                println!("  [{}] {}", i + 1, name);
-            }
-
-            print!("Select an account to use [1-{}]: ", matches.len());
-            io::stdout().flush().unwrap();
-            let mut input = String::new();
-            io::stdin().read_line(&mut input)?;
-            let choice: usize = input.trim().parse().unwrap_or(0);
-
-            if choice == 0 || choice > matches.len() {
-                return Err(Box::from("Invalid selection"));
-            }
-            matches[choice - 1].0.clone()
+            eprintln!("Error: Account does not exist.");
+            return Ok(());            
         }
     } else {
-        active_account.username.clone()
-    };
-
-    if match_account != active_account.username {
-        if let Some(matched) = accounts.iter().find(|acc| acc.username == match_account) {
-            println!("Setting account {:?} for this repository", matched.username);
-            set_username(&matched.username, false)?;
-            set_email(&matched.email, false)?;
+        if let Some((name, email)) = get_local_git_config() {
+            println!("Local config found, using: {} <{}>", name, email);
+            let commit_msg = get_commit_message(msg)?;
+            run_commit(&commit_msg)?;
+            return Ok(());
         }
-    } else {
-        set_username(&active_account.username, false)?;
-        set_email(&active_account.email, false)?;
+
+        let output = Command::new("git").arg("log").output()?;
+        if !output.status.success() {
+            eprintln!("No commits found, falling back to active account.");
+            set_username(&active_account.username, false)?;
+            set_email(&active_account.email, false)?;
+            let commit_msg = get_commit_message(msg)?;
+            run_commit(&commit_msg)?;
+            return Ok(());
+        }
+
+        let logs = String::from_utf8_lossy(&output.stdout);
+        let list_of_names = accounts.iter().map(|acc| acc.username.as_str()).collect::<Vec<&str>>();
+
+        let match_account = if let Some(matches) = pattern_percentages(&list_of_names, &logs) {
+            if matches.len() == 1 {
+                matches[0].0.clone()
+            } else {
+                println!("Multiple accounts matched:");
+                for (i, (name, _)) in matches.iter().enumerate() {
+                    println!("  [{}] {}", i + 1, name);
+                }
+
+                print!("Select an account to use [1-{}]: ", matches.len());
+                io::stdout().flush().unwrap();
+                let mut input = String::new();
+                io::stdin().read_line(&mut input)?;
+                let choice: usize = input.trim().parse().unwrap_or(0);
+
+                if choice == 0 || choice > matches.len() {
+                    return Err(Box::from("Invalid selection"));
+                }
+                matches[choice - 1].0.clone()
+            }
+        } else {
+            active_account.username.clone()
+        };
+
+        if match_account != active_account.username {
+            if let Some(matched) = accounts.iter().find(|acc| acc.username == match_account) {
+                println!("Setting account {:?} for this repository", matched.username);
+                set_username(&matched.username, false)?;
+                set_email(&matched.email, false)?;
+            }
+        } else {
+            set_username(&active_account.username, false)?;
+            set_email(&active_account.email, false)?;
+        }
+
+        let commit_msg = get_commit_message(msg)?;
+        run_commit(&commit_msg)?;
+        Ok(())
     }
-
-    let commit_msg = get_commit_message(msg)?;
-    run_commit(&commit_msg)?;
-    Ok(())
 }
 
-pub async fn run(msg: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
-    commit(msg).await
+pub async fn run(msg: Option<String>, username_or_alias: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
+    commit(msg, username_or_alias).await
 }

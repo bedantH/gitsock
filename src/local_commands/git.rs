@@ -30,13 +30,13 @@ pub fn set_email(email: &str, global: bool) -> std::io::Result<()> {
 
 pub fn get_local_git_config() -> Option<(String, String)> {
     let name = Command::new("git")
-        .args(["config", "--get", "user.name"])
+        .args(["config", "--get", "--local", "user.name"])
         .output()
         .ok()
         .and_then(|o| if o.status.success() { Some(String::from_utf8_lossy(&o.stdout).trim().to_string()) } else { None });
 
     let email = Command::new("git")
-        .args(["config", "--get", "user.email"])
+        .args(["config", "--get", "--local", "user.email"])
         .output()
         .ok()
         .and_then(|o| if o.status.success() { Some(String::from_utf8_lossy(&o.stdout).trim().to_string()) } else { None });
