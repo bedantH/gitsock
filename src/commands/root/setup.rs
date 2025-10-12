@@ -32,10 +32,10 @@ pub fn setup() -> Result<(), Box<dyn std::error::Error>> {
             fs::set_permissions(&exe_dest, perms)?;
         }
     } else {
-        eprintln!(
-            "[WARNING] Executable {} not found in current directory",
-            file_name
-        );
+        // eprintln!(
+        //     "[WARNING] Executable {} not found in current directory",
+        //     file_name
+        // );
     }
 
     let gitsock_str = gitsock_dir.to_string_lossy().to_string();
@@ -135,10 +135,10 @@ pub fn setup() -> Result<(), Box<dyn std::error::Error>> {
 
             match output {
                 Ok(output) if output.status.success() => {
-                    println!(
-                        "[INFO] Successfully added {} to your permanent PATH",
-                        gitsock_str
-                    );
+                    // println!(
+                    //     "[INFO] Successfully added {} to your permanent PATH",
+                    //     gitsock_str
+                    // );
                 }
                 Ok(_) => {
                     eprintln!("[INFO] Add this to your PATH manually: {}", gitsock_str);
