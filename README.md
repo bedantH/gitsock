@@ -34,19 +34,13 @@ This ensures you never accidentally push company code from your personal account
 ### Option 1: Download Prebuilt Binary (Recommended)
 
 1. Go to the [Releases](https://github.com/bedantH/gitsock/releases) page.  
-2. Download the binary for your OS:
-
-   * **Linux** → `gitsock`  
-   * **macOS** → `gitsock`  
-   * **Windows** → `gitsock.exe`  
-
-3. Run `gitsock setup` command to add gitsock to you PATH env and start using it right away. 
-
-Example (Linux/macOS):  
-
+2. Download the binary for your OS from Releases.  
+3. Give execute permissions to the gitsock binary on Linux/MacOS:
 ```sh
 chmod +x gitsock
 ````
+4. Run `gitsock setup` command to add gitsock to you PATH env, it will complete the initial setup on its own, and then you will be ready to use it right away. 
+
 ---
 
 
@@ -81,9 +75,11 @@ This will setup ENV path variables and create the appropriate folders for you.
 
 * **Add Account**
 
+**NOTE**: Before adding an account, please make sure you have a public email on your GitHub, which will allow gitsock to access email and username from your GitHub account. Once you've logged in you can remove the public email later on!
 ```sh
 gitsock account add
 ```
+This will show a 6-digit device code, unique to your system and open a browser with the designated login URL, complete the login process from there.
 
 * **Remove Account**
 
@@ -94,7 +90,7 @@ gitsock account remove <USERNAME>
 * **List Accounts**
 
 ```sh
-gitsock list
+gitsock ls
 ```
 
 * **Switch Accounts**
@@ -102,6 +98,8 @@ gitsock list
 ```sh
 gitsock use <USERNAME>
 ```
+
+Options: `-l, --local` Switch account only for current repository (PWD should be a Git Repository)
 
 * **Current Account**
 
@@ -125,7 +123,7 @@ Options:
 * **List SSH Connections**
 
 ```sh
-gitsock ssh list
+gitsock ssh ls
 ```
 
 ---
@@ -137,17 +135,19 @@ gitsock ssh list
 ```sh
 gitsock commit -m "Commit message"
 ```
+Options: `-a` Mention which account you want to choose for this commit, this is optional.
 
 (If no `-m`, you’ll be prompted for a message.)
 
 * **Clone Repository**
 
 ```sh
-gitsock clone [OPTIONS] <URL>
+gitsock clone <URL> [OPTIONS]
 ```
 
 Options:
-`-u, --username <USERNAME>` → Specify account for cloning
+- `[USERNAME or ALIAS]` → Specify account to use for cloning
+- `[PATH]` → Path where you want to clone the repository to
 
 ---
 
@@ -188,11 +188,11 @@ gitsock use myuser
 ## Contributing
 
 We welcome contributions from the community!
-Open issues and pull requests on the [GitHub repository](https://github.com/your-repo/gitsock).
+Open issues and pull requests on the [GitHub repository](https://github.com/bedantH/gitsock).
 
 ---
 
 ## License
 
 Gitsock is released under the MIT license.
-See the [LICENSE](LICENSE) file for details.
+See the [LICENSE](https://github.com/bedantH/gitsock/blob/master/LICENSE) file for details.
