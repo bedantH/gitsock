@@ -168,7 +168,7 @@ gitsock account remove myuser
 * **Clone a Repo with a Specific Account**
 
 ```sh
-gitsock clone https://github.com/myuser/repo.git -u myuser
+gitsock clone https://github.com/myuser/repo.git -a myuser
 ```
 
 * **Commit Changes**
