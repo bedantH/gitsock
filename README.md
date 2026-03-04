@@ -2,7 +2,7 @@
 
 Gitsock is a lightweight command-line tool that makes managing multiple Git accounts effortless.
 
-Whether you’re switching between personal projects, client work, or company repos, Gitsock handles the context for you so Git always behaves as expected — no manual tweaks, no mistakes, just smooth workflows.
+Whether you’re switching between personal projects, client work, or company repos, Gitsock handles the context for you so Git always behaves as expected no manual tweaks, no mistakes, just smooth workflows.
 
 ---
 
