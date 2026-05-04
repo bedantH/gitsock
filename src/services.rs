@@ -108,7 +108,6 @@ pub async fn poll_for_token(
 pub(crate) struct UserInfoResponse {
     pub(crate) login: String,
     pub(crate) email: Option<String>,
-    pub(crate) name: String,
 }
 
 pub async fn get_user_info(token: String) -> Result<UserInfoResponse, Box<dyn std::error::Error>> {

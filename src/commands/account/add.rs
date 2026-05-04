@@ -37,7 +37,7 @@ async fn add_new_account() -> Result<(), Box<dyn std::error::Error>> {
                     // Prepare new account
                     let new_account = Account {
                         email: data.email.clone().expect("Email is None"),
-                        name: data.name,
+                        name: data.login.clone(),
                         username: data.login.clone(),
                         token: Some(encrypted_token.clone()),
                         ssh_path: None,

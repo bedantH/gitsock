@@ -6,6 +6,12 @@ async fn switch_account(username_or_alias: &str, local: bool) -> Result<(), Box<
     let currently_active = state.active_account.as_ref().cloned().unwrap();
 
     if currently_active.username == username_or_alias || currently_active.alias.as_deref() == Some(&username_or_alias) {
+        if local {
+            set_email(&currently_active.email, false)?;
+            set_username(&currently_active.username, false)?;
+            println!("Switched to account {:?} for this repository", username_or_alias);
+            return Ok(());
+        }
         println!("Account is already active.");
         return Ok(());
     }
