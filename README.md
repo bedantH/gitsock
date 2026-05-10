@@ -32,22 +32,37 @@ This prevents accidentally committing company work from a personal account (or v
 
 ## Installation
 
+> **Note:** Gitsock stores its configuration, SSH keys, and encrypted tokens in `~/gitsock/`. This directory is created automatically when you run `gitsock setup`. Do not delete it — removing it will wipe all your registered accounts and credentials.
+
 ### Option 1: Prebuilt Binary (Recommended)
 
-1. Download the binary for your OS from the [Releases](https://github.com/bedantH/gitsock/releases) page.
-2. On Linux/macOS, make it executable:
+Download the binary for your platform directly:
+
+**Linux (x86_64)**
+```sh
+curl -L https://github.com/bedantH/gitsock/releases/latest/download/gitsock-linux-x86_64 -o gitsock
+```
+
+**macOS — Apple Silicon (M1/M2/M3)**
+```sh
+curl -L https://github.com/bedantH/gitsock/releases/latest/download/gitsock-macos-arm64 -o gitsock
+```
+
+**macOS — Intel**
+```sh
+curl -L https://github.com/bedantH/gitsock/releases/latest/download/gitsock-macos-x86_64 -o gitsock
+```
+
+Then make it executable and run setup:
 
 ```sh
 chmod +x gitsock
-```
-
-3. Run the setup command (places the binary in `~/gitsock/` and adds it to `PATH`):
-
-```sh
 ./gitsock setup
 ```
 
-Restart your terminal (or `source ~/.bashrc` / `source ~/.zshrc`) for the PATH change to take effect.
+The `setup` command places the binary in `~/gitsock/` and adds it to your `PATH`. Restart your terminal (or run `source ~/.bashrc` / `source ~/.zshrc`) for the change to take effect.
+
+Alternatively, download from the [Releases](https://github.com/bedantH/gitsock/releases) page manually.
 
 ---
 
@@ -192,7 +207,7 @@ gitsock ssh add personal --default
 
 ## Data Storage
 
-Gitsock stores its data in `~/gitsock/`:
+Gitsock stores all its data in `~/gitsock/`, created automatically on first run:
 
 | Path | Contents |
 |---|---|
@@ -203,6 +218,8 @@ Gitsock stores its data in `~/gitsock/`:
 | `~/gitsock/.secret/token.bin` | Encrypted OAuth token |
 
 OAuth tokens are encrypted at rest using AES-256-GCM.
+
+> **Backup tip:** If you want to preserve your accounts across machines or reinstalls, back up the `~/gitsock/` directory.
 
 ---
 
