@@ -15,13 +15,3 @@ pub fn encrypt(data: &[u8]) -> Vec<u8> {
         result
     })
 }
-
-pub fn decrypt(data: &[u8]) -> Vec<u8> {
-    with_key(|key| {
-        let cipher = Aes256Gcm::new(&key);
-        let (nonce_bytes, ciphertext) = data.split_at(12);
-        
-        let nonce = Nonce::from_slice(nonce_bytes);
-        cipher.decrypt(&nonce, ciphertext.as_ref()).expect("Failed to decrypt")
-    })
-}
