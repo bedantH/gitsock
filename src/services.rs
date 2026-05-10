@@ -1,8 +1,6 @@
-use dotenvy::dotenv;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::Deserialize;
-use std::env;
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -10,8 +8,9 @@ const GITHUB_AUTH_BASE_URL: &'static str = "https://github.com";
 const GITHUB_API_BASE_URL: &'static str = "https://api.github.com";
 
 static GITHUB_CLIENT_ID: Lazy<String> = Lazy::new(|| {
-    dotenv().ok();
-    "Ov23liGAAmFlb0WoAavT".to_string()
+    option_env!("GITHUB_OAUTH_CLIENT_ID")
+        .unwrap_or("Ov23liGAAmFlb0WoAavT")
+        .to_string()
 });
 
 static CLIENT: Lazy<Client> = Lazy::new(|| Client::new());

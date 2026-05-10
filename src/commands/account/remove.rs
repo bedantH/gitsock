@@ -1,32 +1,35 @@
-use crate::state::ACCOUNT_STATE;
+use crate::commands::ssh::remove_ssh_for_account;
+use crate::config::get_key_as_file;
+use crate::state::{get_accounts, get_active_account, update_accounts};
+use std::fs;
 
 async fn remove_account(username: String) -> Result<(), Box<dyn std::error::Error>> {
-    let state = ACCOUNT_STATE.lock().unwrap();
-    let mut token: Vec<u8> = vec![];
-    let mut is_active = false;
+    let accounts = get_accounts();
 
-    if let Some(active_account) = &state.active_account {
-        if active_account.username == username {
-            token = active_account.clone().token.unwrap();
-            is_active = true;
-        }
+    let account = accounts.iter().find(|a| a.username == username).cloned()
+        .ok_or_else(|| format!("Account '{}' not found. Run `gitsock ls` to see all accounts.", username))?;
+
+    let was_active = get_active_account().username == username;
+
+    // Clean up SSH keys and config entry before removing from state
+    if let Err(e) = remove_ssh_for_account(&account) {
+        eprintln!("Warning: could not fully clean up SSH files: {}", e);
     }
 
-    if let Some(account) = state.accounts.iter().find(|&account| account.username == username) {
-        token = account.clone().token.unwrap()
+    update_accounts(|accounts| {
+        accounts.retain(|a| a.username != username);
+    });
+
+    if was_active {
+        let active_path = get_key_as_file("active_account");
+        fs::write(active_path, b"")?;
+        println!("Note: '{}' was the active account. Run `gitsock use <username>` to switch to another.", username);
     }
 
-    if token.is_empty() {
-        return Err("Account not found!".into());
-    }
-
-    println!("Account removed successfully!");
-
+    println!("Account '{}' removed successfully.", username);
     Ok(())
 }
 
 pub async fn run(username: String) -> Result<(), Box<dyn std::error::Error>> {
-    remove_account(username).await.expect("Unable to remove account, Please contact support.");
-
-    Ok(())
+    remove_account(username).await
 }

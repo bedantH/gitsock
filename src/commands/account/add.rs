@@ -1,4 +1,3 @@
-use std::option::Option;
 use crate::crypto::encrypt;
 use crate::services::{poll_for_token, start_device_login_flow};
 use crate::services::{get_user_info};
@@ -19,7 +18,30 @@ async fn add_new_account() -> Result<(), Box<dyn std::error::Error>> {
 
             match get_user_info(token).await {
                 Ok(data) => {
-                    println!("Connected to GitSock!, Welcome {:?}", data.login.clone().to_string());
+                    let username = if data.login.is_empty() {
+                        println!("Could not fetch your GitHub username automatically.");
+                        print!("Please enter your GitHub username: ");
+                        io::stdout().flush().unwrap();
+                        let mut input = String::new();
+                        io::stdin().read_line(&mut input).unwrap();
+                        input.trim().to_string()
+                    } else {
+                        data.login.clone()
+                    };
+
+                    let email = match data.email {
+                        Some(ref e) if !e.is_empty() => e.clone(),
+                        _ => {
+                            println!("Could not fetch your email automatically (your GitHub profile email may be set to private).");
+                            print!("Please enter your email address: ");
+                            io::stdout().flush().unwrap();
+                            let mut input = String::new();
+                            io::stdin().read_line(&mut input).unwrap(); // <- this blocks till entered input
+                            input.trim().to_string()
+                        }
+                    };
+
+                    println!("Connected to GitSock! Welcome, {}!", username);
 
                     // Prompt for alias BEFORE updating accounts
                     print!("What alias would you like to set for this account? (Press Enter to skip): ");
@@ -36,9 +58,9 @@ async fn add_new_account() -> Result<(), Box<dyn std::error::Error>> {
 
                     // Prepare new account
                     let new_account = Account {
-                        email: data.email.clone().expect("Email is None"),
-                        name: data.login.clone(),
-                        username: data.login.clone(),
+                        email: email.clone(),
+                        name: username.clone(),
+                        username: username.clone(),
                         token: Some(encrypted_token.clone()),
                         ssh_path: None,
                         alias,
@@ -47,7 +69,7 @@ async fn add_new_account() -> Result<(), Box<dyn std::error::Error>> {
 
                     let mut is_new_account = false;
                     update_accounts(|accounts| {
-                        let exists = accounts.iter().any(|item| item.username == data.login);
+                        let exists = accounts.iter().any(|item| item.username == username);
                         if exists {
                             println!("Account already exists! Run `gitsock account list` to see all the accounts.");
                         } else {

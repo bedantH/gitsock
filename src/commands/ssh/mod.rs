@@ -3,6 +3,8 @@ use clap::Subcommand;
 mod add;
 mod list;
 
+pub use add::remove_ssh_for_account;
+
 #[derive(Subcommand)]
 pub(crate) enum SSHSetupCommands {
     #[clap(name = "add")]

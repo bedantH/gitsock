@@ -2,7 +2,7 @@ use std::process::Command;
 
 pub fn set_username(username: &str, global: bool) -> std::io::Result<()> {
     let args = if global {
-        vec!["config", "user.name", username]
+        vec!["config", "--global", "user.name", username]
     } else {
         vec!["config", "--local", "user.name", username]
     };
@@ -16,7 +16,7 @@ pub fn set_username(username: &str, global: bool) -> std::io::Result<()> {
 
 pub fn set_email(email: &str, global: bool) -> std::io::Result<()> {
     let args = if global {
-        vec!["config", "user.email", email]
+        vec!["config", "--global", "user.email", email]
     } else {
         vec!["config", "--local", "user.email", email]
     };

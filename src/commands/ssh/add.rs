@@ -1,6 +1,6 @@
 use crate::state::{get_accounts, update_account};
 use crate::utils::{generate_rsa_key_pair, save_key};
-use std::env::home_dir;
+use dirs_next as dirs;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::{self, Write};
@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use std::process::Command;
 
 pub fn ssh_key_path(alias: &str) -> PathBuf {
-    let mut path = home_dir().expect("Failed to get home directory");
+    let mut path = dirs::home_dir().expect("Failed to get home directory");
     path.push(".ssh");
 
     let clean_alias = alias.trim();
@@ -27,7 +27,7 @@ pub fn ssh_key_path(alias: &str) -> PathBuf {
 }
 
 pub fn ssh_config_path() -> PathBuf {
-    let mut path = home_dir().expect("Failed to get home directory");
+    let mut path = dirs::home_dir().expect("Failed to get home directory");
     path.push(".ssh");
     path.push("config");
     path
@@ -44,7 +44,13 @@ pub async fn add_ssh_for_account(
     });
 
     if let Some(account) = account_data.cloned() {
-        let alias = account.alias.clone().unwrap();
+        let alias = match account.alias.clone() {
+            Some(a) => a,
+            None => {
+                eprintln!("Account '{}' has no alias. Re-add the account and set an alias when prompted.", username_or_alias);
+                return Err(Box::from("SSH setup requires an account alias."));
+            }
+        };
 
         let private_key_path = ssh_key_path(alias.as_str());
         let public_key_path = ssh_key_path(&format!("{}.pub", alias));
@@ -172,5 +178,88 @@ pub async fn run(
     default: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     add_ssh_for_account(username_or_alias.as_str(), default).await?;
+    Ok(())
+}
+
+pub fn remove_ssh_for_account(account: &crate::types::Account) -> Result<(), Box<dyn std::error::Error>> {
+    let alias = match &account.alias {
+        Some(a) => a.clone(),
+        None => return Ok(()),
+    };
+
+    let private_key_path = ssh_key_path(&alias);
+    let public_key_path = ssh_key_path(&format!("{}.pub", alias));
+
+    if private_key_path.exists() {
+        fs::remove_file(&private_key_path)?;
+        println!("Removed SSH private key: {}", private_key_path.display());
+    }
+    if public_key_path.exists() {
+        fs::remove_file(&public_key_path)?;
+        println!("Removed SSH public key: {}", public_key_path.display());
+    }
+
+    let config_path = ssh_config_path();
+    if config_path.exists() {
+        remove_from_ssh_config(&config_path, &account.username, &alias)?;
+    }
+
+    Ok(())
+}
+
+fn remove_from_ssh_config(
+    config_path: &PathBuf,
+    username: &str,
+    alias: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let content = fs::read_to_string(config_path)?;
+    let marker = format!("# GitHub account: {} ({})", username, alias);
+
+    if !content.contains(&marker) {
+        return Ok(());
+    }
+
+    let lines: Vec<&str> = content.lines().collect();
+    let mut output: Vec<&str> = Vec::new();
+    let mut in_block = false;
+    let mut seen_host = false;
+
+    for line in &lines {
+        if line.trim() == marker {
+            in_block = true;
+            seen_host = false;
+            // Drop the blank line we prepended when writing this entry
+            while output.last().map(|l: &&str| l.trim().is_empty()).unwrap_or(false) {
+                output.pop();
+            }
+            continue;
+        }
+
+        if in_block {
+            if !seen_host {
+                if line.starts_with("Host ") {
+                    seen_host = true;
+                }
+                continue; // skip blank lines before Host, and the Host line itself
+            }
+            // After Host line: skip indented options and blank separators
+            if line.starts_with("    ") || line.starts_with('\t') || line.trim().is_empty() {
+                continue;
+            }
+            // First non-indented, non-blank line — block is over
+            in_block = false;
+        }
+
+        output.push(line);
+    }
+
+    let result = output.join("\n").trim_end().to_string();
+    if result.is_empty() {
+        fs::write(config_path, b"")?;
+    } else {
+        fs::write(config_path, format!("{}\n", result))?;
+    }
+
+    println!("Removed SSH config entry for alias '{}'", alias);
     Ok(())
 }

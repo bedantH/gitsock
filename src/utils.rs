@@ -3,7 +3,6 @@ use rand::rngs::OsRng;
 use std::fs::File;
 use std::io::Write;
 use base64::{engine::general_purpose, Engine as _};
-use chrono::{DateTime, Utc};
 
 fn write_ssh_string(buf: &mut Vec<u8>, data: &[u8]) {
     let len = data.len() as u32;
